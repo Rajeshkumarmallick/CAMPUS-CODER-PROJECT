@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GitHub Profile Viewer</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+        }
+
+        #app {
+            max-width: 800px;
+            margin: 20px auto;
+            text-align: center;
+        }
+
+        #result {
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div id="app">
+        <h1>GitHub Profile Viewer</h1>
+        <label for="username">Enter GitHub Username: </label>
+        <input type="text" id="username" placeholder="Enter username">
+        <button onclick="getUserData()">Get User Data</button>
+        <div id="result"></div>
+    </div>
+
+    <script>
+        function getUserData() {
+            const username = document.getElementById('username').value;
+            const apiUrl = `https://api.github.com/users/${username}`;
+
+            fetch(apiUrl)
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error(`GitHub API error: ${response.statusText}`);
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    displayUserData(data);
+                    return fetch(data.repos_url);
+                })
+                .then(response => response.json())
+                .then(repos => displayRepositories(repos))
+                .catch(error => {
+                    console.error('Error fetching data:', error);
+                    document.getElementById('result').innerHTML = 'Error fetching data. Please try again.';
+                });
+        }
+
+        function displayUserData(user) {
+            const resultElement = document.getElementById('result');
+            resultElement.innerHTML = `
+                <h2>${user.login}</h2>
+                <p>Name: ${user.name || 'N/A'}</p>
+                <p>Followers: ${user.followers}</p>
+                <p>Following: ${user.following}</p>
+                <p>Public Repositories: ${user.public_repos}</p>
+            `;
+        }
+
+        function displayRepositories(repos) {
+            const resultElement = document.getElementById('result');
+            resultElement.innerHTML += '<h3>Repositories</h3>';
+
+            if (repos.length === 0) {
+                resultElement.innerHTML += '<p>No repositories found.</p>';
+            } else {
+                resultElement.innerHTML += '<ul>';
+                repos.forEach(repo => {
+                    resultElement.innerHTML += `<li>${repo.name}</li>`;
+                });
+                resultElement.innerHTML += '</ul>';
+            }
+        }
+    </script>
+</body>
+</html>
